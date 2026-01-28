@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Tracker Pro - 缺陷追踪系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --dark-bg: #0a0a0f;
+            --card-bg: #151520;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(0, 243, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.03) 0%, transparent 50%);
+            color: #e0e0e0;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-panel {
+            background: rgba(21, 21, 32, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .neon-border {
+            position: relative;
+        }
+        
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .neon-border:hover::before {
+            opacity: 1;
+        }
+        
+        .bug-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.4s ease-out backwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .status-badge {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-badge::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .status-badge:hover::after {
+            left: 100%;
+        }
+        
+        .priority-high { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .priority-low { background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+        
+        .status-open { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .status-progress { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+        .status-closed { background: rgba(107, 114, 128, 0.2); color: #d1d5db; }
+        
+        input, textarea, select {
+            background: rgba(10, 10, 15, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #e0e0e0 !important;
+            transition: all 0.3s !important;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.1) !important;
+            outline: none !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .bug-card:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .empty-state {
+            background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 70%);
+        }
+        
+        .stats-number {
+            background: linear-gradient(135deg, #00f3ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .filter-active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
+                    <span class="stats-number">Bug Tracker</span> Pro
+                </h1>
+                <p class="text-gray-400 text-sm md:text-base">专业缺陷追踪与管理系统</p>
+            </div>
+            <div class="flex gap-4 text-sm mono">
+                <div class="glass-panel px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">总计: </span>
+                    <span id="total-count" class="text-white font-bold">0</span>
+                </div>
+                <div class="glass-panel px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">待处理: </span>
+                    <span id="open-count" class="text-blue-400 font-bold">0</span>
+                </div>
+                <div class="glass-panel px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">已解决: </span>
+                    <span id="closed-count" class="text-green-400 font-bold">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Form -->
+        <section class="lg:col-span-1">
+            <div class="glass-panel rounded-2xl p-6 sticky top-4 neon-border">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    提交新 Bug
+                </h2>
+                
+                <form id="bug-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Bug 标题</label>
+                        <input type="text" id="title" required placeholder="简洁描述问题..." 
+                               class="w-full px-4 py-2 rounded-lg bg-opacity-50">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">优先级</label>
+                            <select id="priority" class="w-full px-4 py-2 rounded-lg bg-opacity-50">
+                                <option value="high">🔴 高</option>
+                                <option value="medium" selected>🟡 中</option>
+                                <option value="low">🟢 低</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">状态</label>
+                            <select id="status" class="w-full px-4 py-2 rounded-lg bg-opacity-50">
+                                <option value="open" selected>待处理</option>
+                                <option value="progress">处理中</option>
+                                <option value="closed">已解决</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">标签</label>
+                        <input type="text" id="tags" placeholder="前端, 后端, UI... (逗号分隔)" 
+                               class="w-full px-4 py-2 rounded-lg bg-opacity-50">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">详细描述</label>
+                        <textarea id="description" rows="4" required placeholder="复现步骤、预期结果、实际结果..." 
+                                  class="w-full px-4 py-2 rounded-lg bg-opacity-50 resize-none"></textarea>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="btn-primary w-full py-3 rounded-lg font-bold text-white shadow-lg transform transition hover:scale-[1.02] active:scale-[0.98]">
+                        提交 Bug
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right Column: Bug List -->
+        <section class="lg:col-span-2 space-y-6">
+            
+            <!-- Filters -->
+            <div class="glass-panel rounded-xl p-4 flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex gap-2 flex-wrap">
+                    <button onclick="filterBugs('all')" id="filter-all" class="filter-btn filter-active px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500">
+                        全部
+                    </button>
+                    <button onclick="filterBugs('open')" id="filter-open" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-blue-400">
+                        待处理
+                    </button>
+                    <button onclick="filterBugs('progress')" id="filter-progress" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-purple-400">
+                        处理中
+                    </button>
+                    <button onclick="filterBugs('closed')" id="filter-closed" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-gray-400">
+                        已解决
+                    </button>
+                </div>
+                
+                <div class="relative">
+                    <input type="text" id="search" placeholder="搜索 Bug..." 
+                           class="pl-10 pr-4 py-1.5 rounded-full text-sm w-48 md:w-64 focus:w-56 md:focus:w-72 transition-all">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Bug List Container -->
+            <div id="bug-list" class="space-y-4 min-h-[400px]">
+                <!-- Bugs will be inserted here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden empty-state rounded-2xl p-12 text-center">
+                <svg class="w-24 h-24 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-gray-400 text-lg">暂无 Bug 记录</p>
+                <p class="text-gray-600 text-sm mt-1">太棒了！系统运行完美无缺</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Data Management
+        let bugs = JSON.parse(localStorage.getItem('bugs')) || [];
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBugs();
+            updateStats();
+            
+            // Search functionality
+            document.getElementById('search').addEventListener('input', (e) => {
+                searchTerm = e.target.value.toLowerCase();
+                renderBugs();
+            });
+        });
+
+        // Form Submission
+        document.getElementById('bug-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newBug = {
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                priority: document.getElementById('priority').value,
+                status: document.getElementById('status').value,
+                tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t),
+                description: document.getElementById('description').value,
+                createdAt: new Date().toLocaleString('zh-CN'),
+                updatedAt: new Date().toLocaleString('zh-CN')
+            };
+            
+            bugs.unshift(newBug);
+            saveBugs();
+            renderBugs();
+            updateStats();
+            
+            // Reset form
+            e.target.reset();
+            document.getElementById('priority').value = 'medium';
+            document.getElementById('status').value = 'open';
+            
+            // Visual feedback
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = '✓ 已提交';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('bg-green-600');
+            }, 1500);
+        });
+
+        // Render Bugs
+        function renderBugs() {
+            const container = document.getElementById('bug-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            let filtered = bugs;
+            
+            // Apply status filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(b => b.status === currentFilter);
+            }
+            
+            // Apply search
+            if (searchTerm) {
+                filtered = filtered.filter(b => 
+                    b.title.toLowerCase().includes(searchTerm) || 
+                    b.description.toLowerCase().includes(searchTerm) ||
+                    b.tags.some(t => t.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = filtered.map((bug, index) => `
+                <div class="bug-card glass-panel rounded-xl p-5 relative group" style="animation-delay: ${index * 0.05}s">
+                    <div class="flex flex-col md:flex-row justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-start gap-3 mb-2">
+                                <h3 class="text-lg font-bold text-white">${escapeHtml(bug.title)}</h3>
+                                <span class="status-badge priority-${bug.priority} px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wider">
+                                    ${getPriorityLabel(bug.priority)}
+                                </span>
+                            </div>
+                            
+                            <p class="text-gray-400 text-sm mb-3 line-clamp-2">${escapeHtml(bug.description)}</p>
+                            
+                            <div class="flex flex-wrap items-center gap-2 text-xs">
+                                ${bug.tags.map(tag => `
+                                    <span class="px-2 py-1 rounded bg-white bg-opacity-5 text-gray-300 border border-white border-opacity-10">#${escapeHtml(tag)}</span>
+                                `).join('')}
+                                <span class="text-gray-500 ml-2 mono">${bug.createdAt}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex md:flex-col items-center md:items-end gap-2 md:min-w-[120px]">
+                            <select onchange="updateStatus(${bug.id}, this.value)" 
+                                    class="text-xs py-1 px-2 rounded bg-opacity-50 border-0 cursor-pointer hover:bg-opacity-70 transition ${getStatusClass(bug.status)}">
+                                <option value="open" ${bug.status === 'open' ? 'selected' : ''}>待处理</option>
+                                <option value="progress" ${bug.status === 'progress' ? 'selected' : ''}>处理中</option>
+                                <option value="closed" ${bug.status === 'closed' ? 'selected' : ''}>已解决</option>
+                            </select>
+                            
+                            <button onclick="deleteBug(${bug.id})" 
+                                    class="delete-btn p-1.5 rounded hover:bg-red-500 hover:bg-opacity-20 text-gray-500 hover:text-red-400 transition"
+                                    title="删除">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Helper Functions
+        function getPriorityLabel(p) {
+            const labels = { high: '高', medium: '中', low: '低' };
+            return labels[p] || p;
+        }
+
+        function getStatusClass(s) {
+            const classes = {
+                open: 'status-open',
+                progress: 'status-progress',
+                closed: 'status-closed'
+            };
+            return classes[s] || '';
+        }
+
+        function updateStatus(id, newStatus) {
+            const bug = bugs.find(b => b.id === id);
+            if (bug) {
+                bug.status = newStatus;
+                bug.updatedAt = new Date().toLocaleString('zh-CN');
+                saveBugs();
+                renderBugs();
+                updateStats();
+            }
+        }
+
+        function deleteBug(id) {
+            if (confirm('确定要删除这个 Bug 记录吗？')) {
+                bugs = bugs.filter(b => b.id !== id);
+                saveBugs();
+                renderBugs();
+                updateStats();
+            }
+        }
+
+        function filterBugs(status) {
+            currentFilter = status;
+            
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('filter-active');
+            });
+            document.getElementById(`filter-${status}`).classList.add('filter-active');
+            
+            renderBugs();
+        }
+
+        function updateStats() {
+            document.getElementById('total-count').innerText = bugs.length;
+            document.getElementById('open-count').innerText = bugs.filter(b => b.status === 'open').length;
+            document.getElementById('closed-count').innerText = bugs.filter(b => b.status === 'closed').length;
+        }
+
+        function saveBugs() {
+            localStorage.setItem('bugs', JSON.stringify(bugs));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('search').focus();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
