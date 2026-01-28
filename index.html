@@ -3,383 +3,932 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bug Tracker Pro - 缺陷追踪系统</title>
+    <title>Bug Report System | 问题反馈系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --neon-cyan: #00f3ff;
-            --neon-pink: #ff00ff;
-            --dark-bg: #0a0a0f;
-            --card-bg: #151520;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        * { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; overflow-x: hidden; }
+        .bg-gradient-animate {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #312e81, #1e293b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
         }
-        
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: var(--dark-bg);
-            background-image: 
-                radial-gradient(circle at 20% 50%, rgba(0, 243, 255, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.03) 0%, transparent 50%);
-            color: #e0e0e0;
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        .glass-panel {
-            background: rgba(21, 21, 32, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
-        
-        .neon-border {
-            position: relative;
+        .glass-strong {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .neon-border::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            padding: 1px;
-            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .neon-border:hover::before {
-            opacity: 1;
-        }
-        
-        .bug-card {
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: slideIn 0.4s ease-out backwards;
         }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
         }
-        
-        .status-badge {
+        .btn-hover {
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        
-        .status-badge::after {
+        .btn-hover::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .status-badge:hover::after {
-            left: 100%;
-        }
-        
-        .priority-high { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .priority-low { background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
-        
-        .status-open { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-        .status-progress { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
-        .status-closed { background: rgba(107, 114, 128, 0.2); color: #d1d5db; }
-        
-        input, textarea, select {
-            background: rgba(10, 10, 15, 0.6) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: #e0e0e0 !important;
-            transition: all 0.3s !important;
-        }
-        
-        input:focus, textarea:focus, select:focus {
-            border-color: var(--neon-cyan) !important;
-            box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.1) !important;
-            outline: none !important;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             transform: translate(-50%, -50%);
             transition: width 0.6s, height 0.6s;
         }
-        
-        .btn-primary:active::before {
-            width: 300px;
-            height: 300px;
-        }
-        
-        .delete-btn {
+        .btn-hover:hover::before { width: 300px; height: 300px; }
+        .page {
             opacity: 0;
-            transition: opacity 0.2s;
+            transform: translateY(20px) scale(0.98);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
         }
-        
-        .bug-card:hover .delete-btn {
+        .page.active {
             opacity: 1;
+            transform: translateY(0) scale(1);
+            display: block;
+            animation: slideUp 0.5s ease forwards;
         }
-        
-        .empty-state {
-            background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 70%);
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
-        
-        .stats-number {
-            background: linear-gradient(135deg, #00f3ff, #ff00ff);
+        .bug-card {
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .bug-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .loader {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .checkmark {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #fff;
+            stroke-miterlimit: 10;
+            margin: 10% auto;
+            box-shadow: inset 0px 0px 0px #10b981;
+            animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+        }
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #10b981;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px #10b981; } }
+        .stat-number {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+        .severity-low { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .severity-medium { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .severity-high { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .severity-critical { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* 语言切换按钮样式 */
+        .lang-switch {
+            position: relative;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        ::-webkit-scrollbar-track {
-            background: var(--dark-bg);
+        .lang-switch:hover { background: rgba(255,255,255,0.1); }
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 120px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            backdrop-filter: blur(20px);
+            z-index: 100;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+        .lang-switch.active .lang-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .lang-option {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .filter-active {
-            background: rgba(0, 243, 255, 0.15);
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
+        .lang-option:hover { background: rgba(255,255,255,0.1); }
+        .lang-option.active { color: #6366f1; background: rgba(99,102,241,0.1); }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
-
-    <!-- Header -->
-    <header class="max-w-7xl mx-auto mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 class="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-                    <span class="stats-number">Bug Tracker</span> Pro
-                </h1>
-                <p class="text-gray-400 text-sm md:text-base">专业缺陷追踪与管理系统</p>
-            </div>
-            <div class="flex gap-4 text-sm mono">
-                <div class="glass-panel px-4 py-2 rounded-lg">
-                    <span class="text-gray-400">总计: </span>
-                    <span id="total-count" class="text-white font-bold">0</span>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gradient-animate"></div>
+    
+    <main class="w-full max-w-4xl relative z-10">
+        <!-- 导航栏 -->
+        <nav class="glass rounded-2xl p-4 mb-6 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-bug text-white text-lg"></i>
                 </div>
-                <div class="glass-panel px-4 py-2 rounded-lg">
-                    <span class="text-gray-400">待处理: </span>
-                    <span id="open-count" class="text-blue-400 font-bold">0</span>
-                </div>
-                <div class="glass-panel px-4 py-2 rounded-lg">
-                    <span class="text-gray-400">已解决: </span>
-                    <span id="closed-count" class="text-green-400 font-bold">0</span>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight" data-i18n="appTitle">BugTrack</h1>
+                    <p class="text-xs text-gray-400" data-i18n="appSubtitle">问题追踪系统</p>
                 </div>
             </div>
-        </div>
-    </header>
+            
+            <div class="flex items-center gap-3">
+                <!-- 语言切换按钮 -->
+                <div class="lang-switch glass" onclick="toggleLangDropdown(event)" id="langSwitch">
+                    <i class="fas fa-globe"></i>
+                    <span id="currentLang">中文</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                    <div class="lang-dropdown" onclick="event.stopPropagation()">
+                        <div class="lang-option active" onclick="changeLanguage('zh')" data-lang="zh">
+                            <span class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-xs">中</span>
+                            <span>中文</span>
+                        </div>
+                        <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">
+                            <span class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-xs">EN</span>
+                            <span>English</span>
+                        </div>
+                    </div>
+                </div>
 
-    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Left Column: Form -->
-        <section class="lg:col-span-1">
-            <div class="glass-panel rounded-2xl p-6 sticky top-4 neon-border">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    提交新 Bug
-                </h2>
-                
-                <form id="bug-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Bug 标题</label>
-                        <input type="text" id="title" required placeholder="简洁描述问题..." 
-                               class="w-full px-4 py-2 rounded-lg bg-opacity-50">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-1">优先级</label>
-                            <select id="priority" class="w-full px-4 py-2 rounded-lg bg-opacity-50">
-                                <option value="high">🔴 高</option>
-                                <option value="medium" selected>🟡 中</option>
-                                <option value="low">🟢 低</option>
+                <button onclick="toggleAdminMode()" id="adminToggle" class="px-4 py-2 rounded-xl glass text-sm font-medium hover:bg-white/10 transition-all flex items-center gap-2">
+                    <i class="fas fa-shield-alt"></i>
+                    <span data-i18n="adminEntry">管理员入口</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- 用户提交页面 -->
+        <section id="userPage" class="page active">
+            <div class="glass rounded-3xl p-8 md:p-12 shadow-2xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent" data-i18n="submitTitle">
+                        提交问题反馈
+                    </h2>
+                    <p class="text-gray-400 text-sm md:text-base max-w-lg mx-auto" data-i18n="submitSubtitle">
+                        发现系统缺陷或功能异常？请详细描述您遇到的问题，我们的技术团队将尽快处理。
+                    </p>
+                </div>
+
+                <form id="bugForm" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <i class="fas fa-heading text-indigo-400 text-xs"></i>
+                                <span data-i18n="bugTitle">问题标题</span>
+                            </label>
+                            <input type="text" id="bugTitle" required
+                                class="input-field w-full px-4 py-3 rounded-xl outline-none text-white"
+                                data-i18n-placeholder="titlePlaceholder">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <i class="fas fa-exclamation-triangle text-indigo-400 text-xs"></i>
+                                <span data-i18n="severity">严重程度</span>
+                            </label>
+                            <select id="severity" class="input-field w-full px-4 py-3 rounded-xl outline-none text-white cursor-pointer">
+                                <option value="low" class="bg-slate-800" data-i18n="sevLow">🟢 低 - 轻微影响</option>
+                                <option value="medium" class="bg-slate-800" selected data-i18n="sevMedium">🟡 中 - 功能受限</option>
+                                <option value="high" class="bg-slate-800" data-i18n="sevHigh">🟠 高 - 重要功能异常</option>
+                                <option value="critical" class="bg-slate-800" data-i18n="sevCritical">🔴 紧急 - 系统不可用</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-1">状态</label>
-                            <select id="status" class="w-full px-4 py-2 rounded-lg bg-opacity-50">
-                                <option value="open" selected>待处理</option>
-                                <option value="progress">处理中</option>
-                                <option value="closed">已解决</option>
-                            </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <i class="fas fa-align-left text-indigo-400 text-xs"></i>
+                            <span data-i18n="description">详细描述</span>
+                        </label>
+                        <textarea id="description" required rows="4"
+                            class="input-field w-full px-4 py-3 rounded-xl outline-none text-white resize-none"
+                            data-i18n-placeholder="descPlaceholder"></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <i class="fas fa-list-ol text-indigo-400 text-xs"></i>
+                            <span data-i18n="steps">复现步骤</span>
+                        </label>
+                        <textarea id="steps" rows="3"
+                            class="input-field w-full px-4 py-3 rounded-xl outline-none text-white resize-none"
+                            data-i18n-placeholder="stepsPlaceholder"></textarea>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <i class="fas fa-envelope text-indigo-400 text-xs"></i>
+                                <span data-i18n="email">联系邮箱</span> <span class="text-gray-500 text-xs" data-i18n="optional">(可选)</span>
+                            </label>
+                            <input type="email" id="email"
+                                class="input-field w-full px-4 py-3 rounded-xl outline-none text-white"
+                                placeholder="your@email.com">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <i class="fas fa-paperclip text-indigo-400 text-xs"></i>
+                                <span data-i18n="attachment">截图附件</span>
+                            </label>
+                            <div class="relative">
+                                <input type="file" id="attachment" class="hidden" accept="image/*">
+                                <label for="attachment" 
+                                    class="input-field w-full px-4 py-3 rounded-xl flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group">
+                                    <span id="fileName" class="text-gray-500 text-sm truncate" data-i18n="fileSelect">选择文件...</span>
+                                    <i class="fas fa-cloud-upload-alt text-indigo-400 group-hover:scale-110 transition-transform"></i>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">标签</label>
-                        <input type="text" id="tags" placeholder="前端, 后端, UI... (逗号分隔)" 
-                               class="w-full px-4 py-2 rounded-lg bg-opacity-50">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">详细描述</label>
-                        <textarea id="description" rows="4" required placeholder="复现步骤、预期结果、实际结果..." 
-                                  class="w-full px-4 py-2 rounded-lg bg-opacity-50 resize-none"></textarea>
-                    </div>
-                    
-                    <button type="submit" 
-                            class="btn-primary w-full py-3 rounded-lg font-bold text-white shadow-lg transform transition hover:scale-[1.02] active:scale-[0.98]">
-                        提交 Bug
+
+                    <button type="submit" id="submitBtn"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-4 rounded-xl btn-hover shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 mt-8">
+                        <span data-i18n="submitBtn">提交反馈</span>
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </form>
+
+                <div id="successMessage" class="hidden text-center py-12">
+                    <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                    <h3 class="text-2xl font-bold text-white mb-2" data-i18n="successTitle">提交成功！</h3>
+                    <p class="text-gray-400 mb-6" data-i18n="successMsg">感谢您的反馈，我们会尽快处理。</p>
+                    <button onclick="resetForm()" 
+                        class="px-6 py-3 rounded-xl glass text-white hover:bg-white/10 transition-all" data-i18n="continueSubmit">
+                        继续提交
+                    </button>
+                </div>
             </div>
         </section>
 
-        <!-- Right Column: Bug List -->
-        <section class="lg:col-span-2 space-y-6">
-            
-            <!-- Filters -->
-            <div class="glass-panel rounded-xl p-4 flex flex-wrap gap-3 items-center justify-between">
-                <div class="flex gap-2 flex-wrap">
-                    <button onclick="filterBugs('all')" id="filter-all" class="filter-btn filter-active px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500">
-                        全部
+        <!-- 管理员登录页面 -->
+        <section id="loginPage" class="page">
+            <div class="glass rounded-3xl p-8 md:p-12 shadow-2xl max-w-md mx-auto">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+                        <i class="fas fa-lock text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2" data-i18n="adminLogin">管理员验证</h2>
+                    <p class="text-gray-400 text-sm" data-i18n="loginSubtitle">请输入访问凭证以进入管理后台</p>
+                </div>
+
+                <form id="loginForm" class="space-y-6" onsubmit="handleLogin(event)">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-300" data-i18n="username">管理员账号</label>
+                        <input type="text" id="adminUser" required
+                            class="input-field w-full px-4 py-3 rounded-xl outline-none text-white"
+                            placeholder="admin">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-300" data-i18n="password">密码</label>
+                        <div class="relative">
+                            <input type="password" id="adminPass" required
+                                class="input-field w-full px-4 py-3 rounded-xl outline-none text-white pr-10"
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" 
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1" data-i18n="defaultCreds">默认账号: admin</p>
+                    </div>
+
+                    <button type="submit" id="loginBtn"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-3 rounded-xl btn-hover shadow-lg">
+                        <span data-i18n="loginBtn">验证并进入</span>
                     </button>
-                    <button onclick="filterBugs('open')" id="filter-open" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-blue-400">
-                        待处理
+
+                    <button type="button" onclick="showPage('userPage')"
+                        class="w-full glass py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all text-sm" data-i18n="backToUser">
+                        返回用户页面
                     </button>
-                    <button onclick="filterBugs('progress')" id="filter-progress" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-purple-400">
-                        处理中
-                    </button>
-                    <button onclick="filterBugs('closed')" id="filter-closed" class="filter-btn px-4 py-1.5 rounded-full text-sm border border-gray-700 transition hover:border-gray-500 text-gray-400">
-                        已解决
-                    </button>
+                </form>
+
+                <div id="loginError" class="hidden mt-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm text-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span data-i18n="loginError">账号或密码错误</span>
                 </div>
                 
-                <div class="relative">
-                    <input type="text" id="search" placeholder="搜索 Bug..." 
-                           class="pl-10 pr-4 py-1.5 rounded-full text-sm w-48 md:w-64 focus:w-56 md:focus:w-72 transition-all">
-                    <svg class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
+                <div id="loginAttempt" class="hidden mt-4 p-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-sm text-center">
+                    <i class="fas fa-clock mr-2"></i>
+                    <span data-i18n="lockoutMsg">失败次数过多，请 <span id="countdown">60</span> 秒后重试</span>
                 </div>
             </div>
+        </section>
 
-            <!-- Bug List Container -->
-            <div id="bug-list" class="space-y-4 min-h-[400px]">
-                <!-- Bugs will be inserted here -->
-            </div>
-            
-            <!-- Empty State -->
-            <div id="empty-state" class="hidden empty-state rounded-2xl p-12 text-center">
-                <svg class="w-24 h-24 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <p class="text-gray-400 text-lg">暂无 Bug 记录</p>
-                <p class="text-gray-600 text-sm mt-1">太棒了！系统运行完美无缺</p>
+        <!-- 管理后台页面 -->
+        <section id="adminPage" class="page">
+            <div class="glass-strong rounded-3xl p-6 md:p-8 shadow-2xl min-h-[600px]">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                            <i class="fas fa-chart-line text-indigo-400"></i>
+                            <span data-i18n="adminPanel">Bug 管理面板</span>
+                        </h2>
+                        <p class="text-gray-400 text-sm mt-1" data-i18n="adminSubtitle">查看和处理所有提交的问题反馈</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="refreshData()" 
+                            class="px-4 py-2 rounded-xl glass text-sm font-medium hover:bg-white/10 transition-all flex items-center gap-2 group">
+                            <i class="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500"></i>
+                            <span data-i18n="refresh">刷新</span>
+                        </button>
+                        <button onclick="logout()" 
+                            class="px-4 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 text-sm font-medium hover:bg-red-500/30 transition-all flex items-center gap-2">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span data-i18n="logout">退出</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass rounded-2xl p-4 border-l-4 border-indigo-500">
+                        <p class="text-gray-400 text-xs mb-1" data-i18n="total">总提交数</p>
+                        <p class="text-2xl font-bold stat-number" id="totalCount">0</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border-l-4 border-yellow-500">
+                        <p class="text-gray-400 text-xs mb-1" data-i18n="pending">待处理</p>
+                        <p class="text-2xl font-bold text-yellow-400" id="pendingCount">0</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border-l-4 border-blue-500">
+                        <p class="text-gray-400 text-xs mb-1" data-i18n="processing">处理中</p>
+                        <p class="text-2xl font-bold text-blue-400" id="processingCount">0</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border-l-4 border-green-500">
+                        <p class="text-gray-400 text-xs mb-1" data-i18n="resolved">已解决</p>
+                        <p class="text-2xl font-bold text-green-400" id="resolvedCount">0</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="filterBugs('all')" class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white transition-all" data-filter="all" data-i18n="filterAll">全部</button>
+                    <button onclick="filterBugs('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium glass text-gray-300 hover:bg-white/10 transition-all" data-filter="pending" data-i18n="filterPending">待处理</button>
+                    <button onclick="filterBugs('processing')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium glass text-gray-300 hover:bg-white/10 transition-all" data-filter="processing" data-i18n="filterProcessing">处理中</button>
+                    <button onclick="filterBugs('resolved')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium glass text-gray-300 hover:bg-white/10 transition-all" data-filter="resolved" data-i18n="filterResolved">已解决</button>
+                    <div class="flex-1"></div>
+                    <select id="severityFilter" onchange="applyFilters()" class="glass px-4 py-2 rounded-lg text-sm text-gray-300 outline-none cursor-pointer border border-white/10">
+                        <option value="all" data-i18n="allLevels">所有等级</option>
+                        <option value="critical">🔴 <span data-i18n="critical">紧急</span></option>
+                        <option value="high">🟠 <span data-i18n="high">高</span></option>
+                        <option value="medium">🟡 <span data-i18n="medium">中</span></option>
+                        <option value="low">🟢 <span data-i18n="low">低</span></option>
+                    </select>
+                </div>
+
+                <div id="bugList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2"></div>
+                <div id="emptyState" class="hidden text-center py-16">
+                    <div class="w-20 h-20 glass rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-inbox text-3xl text-gray-500"></i>
+                    </div>
+                    <p class="text-gray-400" data-i18n="noData">暂无数据</p>
+                </div>
             </div>
         </section>
     </main>
 
-    <script>
-        // Data Management
-        let bugs = JSON.parse(localStorage.getItem('bugs')) || [];
-        let currentFilter = 'all';
-        let searchTerm = '';
+    <!-- Bug详情模态框 -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onclick="closeModalOnBg(event)">
+        <div class="glass-strong w-full max-w-2xl rounded-3xl p-6 md:p-8 transform transition-all scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="modalContent">
+            <div class="flex justify-between items-start mb-6 sticky top-0 bg-transparent">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span id="modalSeverity" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+                        <span id="modalStatus" class="px-3 py-1 rounded-full text-xs font-medium glass"></span>
+                    </div>
+                    <h3 id="modalTitle" class="text-xl font-bold text-white"></h3>
+                    <p id="modalTime" class="text-sm text-gray-400 mt-1"></p>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            renderBugs();
-            updateStats();
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                        <i class="fas fa-align-left text-indigo-400"></i>
+                        <span data-i18n="modalDesc">问题描述</span>
+                    </h4>
+                    <div id="modalDesc" class="glass rounded-xl p-4 text-gray-300 text-sm leading-relaxed whitespace-pre-wrap"></div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                        <i class="fas fa-list-ol text-indigo-400"></i>
+                        <span data-i18n="modalSteps">复现步骤</span>
+                    </h4>
+                    <div id="modalSteps" class="glass rounded-xl p-4 text-gray-300 text-sm leading-relaxed whitespace-pre-wrap"></div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-400 mb-2" data-i18n="modalEmail">联系邮箱</h4>
+                        <p id="modalEmail" class="text-gray-300 text-sm"></p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-400 mb-2" data-i18n="modalAttach">附件</h4>
+                        <p id="modalAttachment" class="text-gray-300 text-sm"></p>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-white/10 flex justify-end gap-3" id="modalActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 语言配置 ==========
+        const translations = {
+            zh: {
+                appTitle: "BugTrack",
+                appSubtitle: "问题追踪系统",
+                adminEntry: "管理员入口",
+                submitTitle: "提交问题反馈",
+                submitSubtitle: "发现系统缺陷或功能异常？请详细描述您遇到的问题，我们的技术团队将尽快处理。",
+                bugTitle: "问题标题",
+                titlePlaceholder: "简要描述问题...",
+                severity: "严重程度",
+                sevLow: "🟢 低 - 轻微影响",
+                sevMedium: "🟡 中 - 功能受限",
+                sevHigh: "🟠 高 - 重要功能异常",
+                sevCritical: "🔴 紧急 - 系统不可用",
+                description: "详细描述",
+                descPlaceholder: "请详细描述：\n1. 发生了什么？\n2. 期望的结果是什么？\n3. 实际的结果是什么？",
+                steps: "复现步骤",
+                stepsPlaceholder: "1. 打开...\n2. 点击...\n3. 出现错误...",
+                email: "联系邮箱",
+                optional: "(可选)",
+                attachment: "截图附件",
+                fileSelect: "选择文件...",
+                submitBtn: "提交反馈",
+                successTitle: "提交成功！",
+                successMsg: "感谢您的反馈，我们会尽快处理。",
+                continueSubmit: "继续提交",
+                adminLogin: "管理员验证",
+                loginSubtitle: "请输入访问凭证以进入管理后台",
+                username: "管理员账号",
+                password: "密码",
+                defaultCreds: "默认账号: admin",
+                loginBtn: "验证并进入",
+                backToUser: "返回用户页面",
+                loginError: "账号或密码错误",
+                lockoutMsg: "失败次数过多，请 {0} 秒后重试",
+                adminPanel: "Bug 管理面板",
+                adminSubtitle: "查看和处理所有提交的问题反馈",
+                refresh: "刷新",
+                logout: "退出",
+                total: "总提交数",
+                pending: "待处理",
+                processing: "处理中",
+                resolved: "已解决",
+                filterAll: "全部",
+                filterPending: "待处理",
+                filterProcessing: "处理中",
+                filterResolved: "已解决",
+                allLevels: "所有等级",
+                critical: "紧急",
+                high: "高",
+                medium: "中",
+                low: "低",
+                noData: "暂无数据",
+                modalDesc: "问题描述",
+                modalSteps: "复现步骤",
+                modalEmail: "联系邮箱",
+                modalAttach: "附件",
+                markProcessing: "标记为处理中",
+                markResolved: "标记为已解决",
+                resetPending: "重置为待处理",
+                statusPending: "待处理",
+                statusProcessing: "处理中",
+                statusResolved: "已解决",
+                severityLow: "低",
+                severityMedium: "中",
+                severityHigh: "高",
+                severityCritical: "紧急",
+                deleteConfirm: "确定要删除这条记录吗？此操作不可恢复。",
+                deleted: "已删除",
+                updated: "已更新",
+                noDesc: "无描述",
+                noSteps: "无复现步骤",
+                noEmail: "未提供",
+                submittedAt: "提交于",
+                updatedAt: "更新于"
+            },
+            en: {
+                appTitle: "BugTrack",
+                appSubtitle: "Issue Tracking System",
+                adminEntry: "Admin",
+                submitTitle: "Submit Feedback",
+                submitSubtitle: "Found a bug or anomaly? Please describe the issue in detail. Our team will address it promptly.",
+                bugTitle: "Issue Title",
+                titlePlaceholder: "Briefly describe the issue...",
+                severity: "Severity",
+                sevLow: "🟢 Low - Minor Impact",
+                sevMedium: "🟡 Medium - Feature Limited",
+                sevHigh: "🟠 High - Critical Feature",
+                sevCritical: "🔴 Critical - System Down",
+                description: "Description",
+                descPlaceholder: "Please describe in detail:\n1. What happened?\n2. Expected result?\n3. Actual result?",
+                steps: "Steps to Reproduce",
+                stepsPlaceholder: "1. Open...\n2. Click...\n3. Error occurs...",
+                email: "Contact Email",
+                optional: "(Optional)",
+                attachment: "Attachment",
+                fileSelect: "Choose file...",
+                submitBtn: "Submit Feedback",
+                successTitle: "Submitted Successfully!",
+                successMsg: "Thank you for your feedback. We'll process it soon.",
+                continueSubmit: "Submit Another",
+                adminLogin: "Admin Verification",
+                loginSubtitle: "Please enter credentials to access admin dashboard",
+                username: "Username",
+                password: "Password",
+                defaultCreds: "Default: admin",
+                loginBtn: "Login",
+                backToUser: "Back to User",
+                loginError: "Invalid credentials",
+                lockoutMsg: "Too many attempts. Retry in {0}s",
+                adminPanel: "Bug Management",
+                adminSubtitle: "View and manage all submitted issues",
+                refresh: "Refresh",
+                logout: "Logout",
+                total: "Total",
+                pending: "Pending",
+                processing: "Processing",
+                resolved: "Resolved",
+                filterAll: "All",
+                filterPending: "Pending",
+                filterProcessing: "Processing",
+                filterResolved: "Resolved",
+                allLevels: "All Levels",
+                critical: "Critical",
+                high: "High",
+                medium: "Medium",
+                low: "Low",
+                noData: "No data available",
+                modalDesc: "Description",
+                modalSteps: "Reproduction Steps",
+                modalEmail: "Contact Email",
+                modalAttach: "Attachment",
+                markProcessing: "Mark Processing",
+                markResolved: "Mark Resolved",
+                resetPending: "Reset to Pending",
+                statusPending: "Pending",
+                statusProcessing: "Processing",
+                statusResolved: "Resolved",
+                severityLow: "Low",
+                severityMedium: "Medium",
+                severityHigh: "High",
+                severityCritical: "Critical",
+                deleteConfirm: "Are you sure you want to delete this record? This action cannot be undone.",
+                deleted: "Deleted",
+                updated: "Updated",
+                noDesc: "No description",
+                noSteps: "No steps provided",
+                noEmail: "Not provided",
+                submittedAt: "Submitted",
+                updatedAt: "Updated"
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('language') || 'zh';
+        
+        // 初始化语言
+        function initLanguage() {
+            updateLanguage(currentLanguage);
+        }
+
+        function toggleLangDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('langSwitch').classList.toggle('active');
+        }
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
             
-            // Search functionality
-            document.getElementById('search').addEventListener('input', (e) => {
-                searchTerm = e.target.value.toLowerCase();
-                renderBugs();
+            // 更新下拉框显示
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.remove('active');
+                if(opt.dataset.lang === lang) opt.classList.add('active');
             });
+            
+            document.getElementById('currentLang').textContent = lang === 'zh' ? '中文' : 'EN';
+            document.getElementById('langSwitch').classList.remove('active');
+            
+            updateLanguage(lang);
+        }
+
+        function updateLanguage(lang) {
+            const t = translations[lang];
+            
+            // 更新所有带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            // 更新 placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                if (t[key]) el.placeholder = t[key];
+            });
+            
+            // 更新 select options
+            document.querySelectorAll('option[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            // 更新 HTML lang 属性
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            
+            // 如果当前在管理页面，刷新列表以更新语言
+            if (document.getElementById('adminPage').classList.contains('active')) {
+                renderBugList();
+            }
+        }
+
+        // 点击外部关闭语言下拉
+        document.addEventListener('click', () => {
+            document.getElementById('langSwitch').classList.remove('active');
         });
 
-        // Form Submission
-        document.getElementById('bug-form').addEventListener('submit', (e) => {
+        // ========== 原有业务逻辑 ==========
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD_HASH = '5ef2f3c3e01925b2f0fb78f4e41f5a3e8c9a7c21f52e8e53f2f2f8f4e3a9b2c1';
+        
+        let bugs = JSON.parse(localStorage.getItem('bugReports')) || [];
+        let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+        let currentFilter = 'all';
+        let currentSeverityFilter = 'all';
+        let loginAttempts = 0;
+        let lockoutTimer = null;
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+            setupFileInput();
+            if (isAdmin) {
+                showPage('adminPage');
+                loadAdminData();
+            } else {
+                showPage('userPage');
+            }
+        });
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+                setTimeout(() => {
+                    if (!page.classList.contains('active')) page.style.display = 'none';
+                }, 500);
+            });
+            const target = document.getElementById(pageId);
+            target.style.display = 'block';
+            setTimeout(() => target.classList.add('active'), 50);
+            
+            document.getElementById('adminToggle').style.display = pageId === 'adminPage' ? 'none' : 'flex';
+        }
+
+        function toggleAdminMode() {
+            if (isAdmin) {
+                showPage('adminPage');
+                loadAdminData();
+            } else {
+                showPage('loginPage');
+            }
+        }
+
+        function setupFileInput() {
+            const input = document.getElementById('attachment');
+            const label = document.getElementById('fileName');
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    label.textContent = e.target.files[0].name;
+                    label.classList.add('text-indigo-400');
+                } else {
+                    label.textContent = translations[currentLanguage].fileSelect;
+                    label.classList.remove('text-indigo-400');
+                }
+            });
+        }
+
+        // 提交表单
+        document.getElementById('bugForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="loader"></div><span class="ml-2">...</span>';
+            btn.disabled = true;
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             const newBug = {
                 id: Date.now(),
-                title: document.getElementById('title').value,
-                priority: document.getElementById('priority').value,
-                status: document.getElementById('status').value,
-                tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t),
+                title: document.getElementById('bugTitle').value,
+                severity: document.getElementById('severity').value,
                 description: document.getElementById('description').value,
-                createdAt: new Date().toLocaleString('zh-CN'),
-                updatedAt: new Date().toLocaleString('zh-CN')
+                steps: document.getElementById('steps').value,
+                email: document.getElementById('email').value,
+                attachment: document.getElementById('attachment').files[0]?.name || translations[currentLanguage].noData,
+                status: 'pending',
+                createdAt: new Date().toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US'),
+                updatedAt: new Date().toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US')
             };
             
             bugs.unshift(newBug);
-            saveBugs();
-            renderBugs();
-            updateStats();
-            
-            // Reset form
-            e.target.reset();
-            document.getElementById('priority').value = 'medium';
-            document.getElementById('status').value = 'open';
-            
-            // Visual feedback
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerText;
-            btn.innerText = '✓ 已提交';
-            btn.classList.add('bg-green-600');
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.remove('bg-green-600');
-            }, 1500);
+            localStorage.setItem('bugReports', JSON.stringify(bugs));
+            document.getElementById('bugForm').style.display = 'none';
+            document.getElementById('successMessage').classList.remove('hidden');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
         });
 
-        // Render Bugs
-        function renderBugs() {
-            const container = document.getElementById('bug-list');
-            const emptyState = document.getElementById('empty-state');
+        function resetForm() {
+            document.getElementById('bugForm').reset();
+            document.getElementById('fileName').textContent = translations[currentLanguage].fileSelect;
+            document.getElementById('fileName').classList.remove('text-indigo-400');
+            document.getElementById('bugForm').style.display = 'block';
+            document.getElementById('successMessage').classList.add('hidden');
+        }
+
+        // 登录处理
+        async function handleLogin(e) {
+            e.preventDefault();
+            if (loginAttempts >= 3) return;
             
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.innerHTML = '<div class="loader inline-block mr-2"></div>...';
+            btn.disabled = true;
+            
+            const inputHash = await sha256(pass);
+            
+            await new Promise(r => setTimeout(r, 800));
+            
+            if (user === ADMIN_USERNAME && inputHash === ADMIN_PASSWORD_HASH) {
+                isAdmin = true;
+                sessionStorage.setItem('isAdmin', 'true');
+                loginAttempts = 0;
+                document.getElementById('loginError').classList.add('hidden');
+                showPage('adminPage');
+                loadAdminData();
+            } else {
+                loginAttempts++;
+                document.getElementById('loginError').classList.remove('hidden');
+                
+                const form = document.getElementById('loginForm');
+                form.style.animation = 'shake 0.5s';
+                setTimeout(() => form.style.animation = '', 500);
+                
+                if (loginAttempts >= 3) {
+                    document.getElementById('loginError').classList.add('hidden');
+                    document.getElementById('loginAttempt').classList.remove('hidden');
+                    const t = translations[currentLanguage];
+                    document.getElementById('loginAttempt').innerHTML = `<i class="fas fa-clock mr-2"></i>${t.lockoutMsg.replace('{0}', '<span id="countdown">60</span>')}`;
+                    btn.disabled = true;
+                    
+                    let countdown = 60;
+                    const timer = setInterval(() => {
+                        countdown--;
+                        const span = document.getElementById('countdown');
+                        if (span) span.textContent = countdown;
+                        if (countdown <= 0) {
+                            clearInterval(timer);
+                            loginAttempts = 0;
+                            document.getElementById('loginAttempt').classList.add('hidden');
+                            btn.disabled = false;
+                            btn.innerHTML = translations[currentLanguage].loginBtn;
+                        }
+                    }, 1000);
+                }
+            }
+            
+            if (loginAttempts < 3) {
+                btn.innerHTML = translations[currentLanguage].loginBtn;
+                btn.disabled = false;
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('adminPass');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function loadAdminData() {
+            updateStats();
+            renderBugList();
+        }
+
+        function updateStats() {
+            document.getElementById('totalCount').textContent = bugs.length;
+            document.getElementById('pendingCount').textContent = bugs.filter(b => b.status === 'pending').length;
+            document.getElementById('processingCount').textContent = bugs.filter(b => b.status === 'processing').length;
+            document.getElementById('resolvedCount').textContent = bugs.filter(b => b.status === 'resolved').length;
+        }
+
+        function renderBugList() {
+            const container = document.getElementById('bugList');
+            const emptyState = document.getElementById('emptyState');
+            const t = translations[currentLanguage];
             let filtered = bugs;
             
-            // Apply status filter
-            if (currentFilter !== 'all') {
-                filtered = filtered.filter(b => b.status === currentFilter);
-            }
-            
-            // Apply search
-            if (searchTerm) {
-                filtered = filtered.filter(b => 
-                    b.title.toLowerCase().includes(searchTerm) || 
-                    b.description.toLowerCase().includes(searchTerm) ||
-                    b.tags.some(t => t.toLowerCase().includes(searchTerm))
-                );
-            }
+            if (currentFilter !== 'all') filtered = filtered.filter(b => b.status === currentFilter);
+            if (currentSeverityFilter !== 'all') filtered = filtered.filter(b => b.severity === currentSeverityFilter);
             
             if (filtered.length === 0) {
                 container.innerHTML = '';
@@ -388,121 +937,167 @@
             }
             
             emptyState.classList.add('hidden');
-            
             container.innerHTML = filtered.map((bug, index) => `
-                <div class="bug-card glass-panel rounded-xl p-5 relative group" style="animation-delay: ${index * 0.05}s">
-                    <div class="flex flex-col md:flex-row justify-between gap-4">
-                        <div class="flex-1">
-                            <div class="flex items-start gap-3 mb-2">
-                                <h3 class="text-lg font-bold text-white">${escapeHtml(bug.title)}</h3>
-                                <span class="status-badge priority-${bug.priority} px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wider">
-                                    ${getPriorityLabel(bug.priority)}
-                                </span>
+                <div class="bug-card glass rounded-xl p-4 cursor-pointer border border-white/5 hover:border-indigo-500/30" 
+                     style="animation-delay: ${index * 0.05}s" onclick="showDetail(${bug.id})">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="severity-${bug.severity} px-2 py-0.5 rounded text-xs font-bold">${getSeverityText(bug.severity)}</span>
+                                <span class="text-xs ${getStatusColor(bug.status)} px-2 py-0.5 rounded glass">${getStatusText(bug.status)}</span>
                             </div>
-                            
-                            <p class="text-gray-400 text-sm mb-3 line-clamp-2">${escapeHtml(bug.description)}</p>
-                            
-                            <div class="flex flex-wrap items-center gap-2 text-xs">
-                                ${bug.tags.map(tag => `
-                                    <span class="px-2 py-1 rounded bg-white bg-opacity-5 text-gray-300 border border-white border-opacity-10">#${escapeHtml(tag)}</span>
-                                `).join('')}
-                                <span class="text-gray-500 ml-2 mono">${bug.createdAt}</span>
-                            </div>
+                            <h4 class="font-medium text-white truncate mb-1">${bug.title}</h4>
+                            <p class="text-xs text-gray-400 truncate">${bug.description || t.noDesc}</p>
+                            <p class="text-xs text-gray-500 mt-2"><i class="far fa-clock mr-1"></i>${bug.createdAt}</p>
                         </div>
-                        
-                        <div class="flex md:flex-col items-center md:items-end gap-2 md:min-w-[120px]">
-                            <select onchange="updateStatus(${bug.id}, this.value)" 
-                                    class="text-xs py-1 px-2 rounded bg-opacity-50 border-0 cursor-pointer hover:bg-opacity-70 transition ${getStatusClass(bug.status)}">
-                                <option value="open" ${bug.status === 'open' ? 'selected' : ''}>待处理</option>
-                                <option value="progress" ${bug.status === 'progress' ? 'selected' : ''}>处理中</option>
-                                <option value="closed" ${bug.status === 'closed' ? 'selected' : ''}>已解决</option>
-                            </select>
-                            
-                            <button onclick="deleteBug(${bug.id})" 
-                                    class="delete-btn p-1.5 rounded hover:bg-red-500 hover:bg-opacity-20 text-gray-500 hover:text-red-400 transition"
-                                    title="删除">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+                        <div class="flex flex-col gap-2">
+                            ${bug.status !== 'resolved' ? `
+                                <button onclick="event.stopPropagation(); updateStatus(${bug.id}, 'resolved')" class="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 flex items-center justify-center transition-colors" title="${t.markResolved}"><i class="fas fa-check"></i></button>
+                            ` : ''}
+                            ${bug.status === 'pending' ? `
+                                <button onclick="event.stopPropagation(); updateStatus(${bug.id}, 'processing')" class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 flex items-center justify-center transition-colors" title="${t.markProcessing}"><i class="fas fa-spinner"></i></button>
+                            ` : ''}
+                            <button onclick="event.stopPropagation(); deleteBug(${bug.id})" class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 flex items-center justify-center transition-colors" title="${t.deleted}"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Helper Functions
-        function getPriorityLabel(p) {
-            const labels = { high: '高', medium: '中', low: '低' };
-            return labels[p] || p;
+        function filterBugs(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === status) {
+                    btn.classList.remove('glass', 'text-gray-300');
+                    btn.classList.add('bg-indigo-600', 'text-white');
+                } else {
+                    btn.classList.add('glass', 'text-gray-300');
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                }
+            });
+            renderBugList();
         }
 
-        function getStatusClass(s) {
-            const classes = {
-                open: 'status-open',
-                progress: 'status-progress',
-                closed: 'status-closed'
-            };
-            return classes[s] || '';
+        function applyFilters() {
+            currentSeverityFilter = document.getElementById('severityFilter').value;
+            renderBugList();
         }
 
         function updateStatus(id, newStatus) {
             const bug = bugs.find(b => b.id === id);
             if (bug) {
                 bug.status = newStatus;
-                bug.updatedAt = new Date().toLocaleString('zh-CN');
-                saveBugs();
-                renderBugs();
-                updateStats();
+                bug.updatedAt = new Date().toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US');
+                localStorage.setItem('bugReports', JSON.stringify(bugs));
+                loadAdminData();
+                showToast(translations[currentLanguage].updated);
             }
         }
 
         function deleteBug(id) {
-            if (confirm('确定要删除这个 Bug 记录吗？')) {
+            if (confirm(translations[currentLanguage].deleteConfirm)) {
                 bugs = bugs.filter(b => b.id !== id);
-                saveBugs();
-                renderBugs();
-                updateStats();
+                localStorage.setItem('bugReports', JSON.stringify(bugs));
+                loadAdminData();
+                showToast(translations[currentLanguage].deleted);
             }
         }
 
-        function filterBugs(status) {
-            currentFilter = status;
+        function showDetail(id) {
+            const bug = bugs.find(b => b.id === id);
+            if (!bug) return;
+            const t = translations[currentLanguage];
             
-            // Update UI
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('filter-active');
-            });
-            document.getElementById(`filter-${status}`).classList.add('filter-active');
+            document.getElementById('modalTitle').textContent = bug.title;
+            document.getElementById('modalTime').textContent = `${t.submittedAt} ${bug.createdAt} | ${t.updatedAt} ${bug.updatedAt}`;
+            document.getElementById('modalDesc').textContent = bug.description || t.noDesc;
+            document.getElementById('modalSteps').textContent = bug.steps || t.noSteps;
+            document.getElementById('modalEmail').textContent = bug.email || t.noEmail;
+            document.getElementById('modalAttachment').textContent = bug.attachment;
             
-            renderBugs();
+            const sevBadge = document.getElementById('modalSeverity');
+            sevBadge.className = `severity-${bug.severity} px-3 py-1 rounded-full text-xs font-bold`;
+            sevBadge.textContent = getSeverityText(bug.severity);
+            
+            const statusBadge = document.getElementById('modalStatus');
+            statusBadge.className = `px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(bug.status)}`;
+            statusBadge.textContent = getStatusText(bug.status);
+            
+            const actions = document.getElementById('modalActions');
+            actions.innerHTML = '';
+            if (bug.status !== 'processing') actions.innerHTML += `<button onclick="updateStatus(${bug.id}, 'processing'); closeModal();" class="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm font-medium">${t.markProcessing}</button>`;
+            if (bug.status !== 'resolved') actions.innerHTML += `<button onclick="updateStatus(${bug.id}, 'resolved'); closeModal();" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm font-medium">${t.markResolved}</button>`;
+            if (bug.status !== 'pending') actions.innerHTML += `<button onclick="updateStatus(${bug.id}, 'pending'); closeModal();" class="px-4 py-2 rounded-lg glass text-gray-300 hover:bg-white/10 transition-colors text-sm font-medium">${t.resetPending}</button>`;
+            
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
         }
 
-        function updateStats() {
-            document.getElementById('total-count').innerText = bugs.length;
-            document.getElementById('open-count').innerText = bugs.filter(b => b.status === 'open').length;
-            document.getElementById('closed-count').innerText = bugs.filter(b => b.status === 'closed').length;
+        function closeModal() {
+            const content = document.getElementById('modalContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                document.getElementById('detailModal').classList.add('hidden');
+            }, 200);
         }
 
-        function saveBugs() {
-            localStorage.setItem('bugs', JSON.stringify(bugs));
+        function closeModalOnBg(e) {
+            if (e.target.id === 'detailModal') closeModal();
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.innerText = text;
-            return div.innerHTML;
+        function logout() {
+            isAdmin = false;
+            sessionStorage.removeItem('isAdmin');
+            loginAttempts = 0;
+            showPage('userPage');
         }
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'f') {
-                    e.preventDefault();
-                    document.getElementById('search').focus();
-                }
-            }
-        });
+        function refreshData() {
+            const btn = document.querySelector('.fa-sync-alt');
+            btn.style.animation = 'spin 1s linear';
+            setTimeout(() => btn.style.animation = '', 1000);
+            loadAdminData();
+            showToast(translations[currentLanguage].updated);
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg z-50 flex items-center gap-2';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i><span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function getSeverityText(sev) {
+            const t = translations[currentLanguage];
+            const map = { low: t.severityLow, medium: t.severityMedium, high: t.severityHigh, critical: t.severityCritical };
+            return map[sev] || sev;
+        }
+
+        function getStatusText(status) {
+            const t = translations[currentLanguage];
+            const map = { pending: t.statusPending, processing: t.statusProcessing, resolved: t.statusResolved };
+            return map[status] || status;
+        }
+
+        function getStatusColor(status) {
+            const map = {
+                pending: 'text-yellow-400 bg-yellow-400/10',
+                processing: 'text-blue-400 bg-blue-400/10',
+                resolved: 'text-green-400 bg-green-400/10'
+            };
+            return map[status] || 'text-gray-400';
+        }
     </script>
 </body>
 </html>
